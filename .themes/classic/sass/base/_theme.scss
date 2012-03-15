@@ -84,3 +84,7 @@ body {
     }
   }
 }
+
+.keyboard-active {
+  background: image-url('keyboard_active_bg.png') repeat-y !important;
+}

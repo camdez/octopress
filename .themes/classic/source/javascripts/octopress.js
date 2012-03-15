@@ -1,3 +1,154 @@
+function bindKeyboardShortcuts() {
+  var SELECTED_ARTICLE_CLASS = 'keyboard-active',
+      selectedArticle = false,
+      articles = jQuery('div.blog-index, div#blog-archives').find('article');
+
+  function scrollTo(article) {
+    jQuery('html,body').animate({scrollTop: article.offset().top}, 'slow');
+  }
+
+  // A "visual bell" of sorts.
+  function blink(article) {
+    article.animate({opacity: 0.25}, 'fast', function() {article.animate({opacity: 1.0}, 'fast');});
+  }
+
+  function select(article) {
+    if (selectedArticle) {
+      if (selectedArticle.is(article) || article.length === 0) {
+        blink(selectedArticle);
+        return;
+      }
+
+      selectedArticle.removeClass(SELECTED_ARTICLE_CLASS);
+    }
+
+    selectedArticle = article;
+    article.addClass(SELECTED_ARTICLE_CLASS);
+    scrollTo(article);
+  }
+
+  // BINDINGS FOR ALL PAGES
+
+  // Go to the index (use whatever the header links to as the target)
+  jQuery(document).bind('keyup', 'i', function() {
+    var href = jQuery('header h1 a').first().attr('href');
+
+    if (href) {
+      window.location.href = href;
+    }
+  });
+
+  // Go to the comments (reply) -- should work on an individual post / page, or on the index (if comments are enabled)
+  jQuery(document).bind('keyup', 'r', function() {
+    if (articles.length === 0) {
+      var comments = jQuery('#disqus_thread');
+      if (comments) {
+        scrollTo(comments);
+      }
+    } else {
+      if (selectedArticle === false) {
+        return;
+      }
+
+      var href = selectedArticle.find('header p.meta a').first().attr('href');
+
+      if (href) {
+        window.location.href = href;
+      }
+    }
+  });
+
+  jQuery(document).bind('keyup', '/', function() {
+    jQuery('input.search').focus();
+  });
+
+  jQuery(document).bind('keyup', 'shift+/', function() {
+    window.alert("Keyboard shortcuts:\n\n" +
+                 "j: Next article\n" +
+                 "k: Previous article\n" +
+                 "^: First article\n" +
+                 "$: Last article\n" +
+                 "RET: View full article\n" +
+                 "r: Comment on article (\"reply\")\n" +
+                 "i: Go to the index\n" +
+                 "p: Previous page (older articles)\n" +
+                 "n: Next page (newer articles)\n" +
+                 "l: Scroll to selected article\n" +
+                 "/: Search\n" +
+                 "?: Help (this page)"
+                );
+  });
+
+  if (articles.length === 0) {
+    return;
+  }
+
+  // BINDINGS FOR ARTICLE LISTINGS
+
+  jQuery(document).bind('keyup', 'j', function() {
+    if (selectedArticle === false) {
+      select(articles.first());
+    } else {
+      var nextArticle = articles.eq(articles.index(selectedArticle) + 1);
+      select(nextArticle);
+    }
+  });
+
+  jQuery(document).bind('keyup', 'k', function() {
+    if (selectedArticle === false) {
+      select(articles.last());
+    } else {
+      var index = articles.index(selectedArticle);
+      if (index === 0) {
+        select(selectedArticle);
+      } else {
+        var previousArticle = articles.eq(index - 1);
+        select(previousArticle);
+      }
+    }
+  });
+
+  jQuery(document).bind('keyup', 'return', function() {
+    if (selectedArticle === false) {
+      return;
+    }
+
+    window.location.href = selectedArticle.find('h1 a').first().attr('href');
+  });
+
+  jQuery(document).bind('keyup', 'l', function() {
+    if (selectedArticle === false) {
+      return;
+    }
+
+    scrollTo(selectedArticle);
+  });
+
+  jQuery(document).bind('keyup', '^', function() {
+    select(articles.first());
+  });
+
+  jQuery(document).bind('keyup', '$', function() {
+    select(articles.last());
+  });
+
+  jQuery(document).bind('keyup', 'p', function() {
+    var href = jQuery('a.prev').attr('href');
+
+    if (href) {
+      window.location.href = href;
+    }
+  });
+
+  jQuery(document).bind('keyup', 'n', function() {
+    var href = jQuery('a.next').attr('href');
+
+    if (href) {
+      window.location.href = href;
+    }
+  });
+}
+
 function getNav() {
   var mobileNav = $('nav[role=navigation] fieldset[role=search]').after('<fieldset class="mobile-nav"></fieldset>').next().append('<select></select>');
   mobileNav.children('select').append('<option value="">Navigate&hellip;</option>');
@@ -123,6 +274,7 @@ $.domReady(function() {
   addCodeLineNumbers();
   getNav();
   addSidebarToggler();
+  bindKeyboardShortcuts();
 });
 
 // iOS scaling bug fix
